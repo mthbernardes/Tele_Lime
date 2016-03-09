@@ -59,6 +59,10 @@ def view_ticket(ticket_number):
         comment_response = BeautifulSoup(response['comment']).text
         bot.sendMessage(chat_id, 'Response time:'+str(time_response)+'\nUsername: '+username_response+'\nAnswer: \n'+comment_response)
 
+def balance():
+    response = api_request('billing','getbalance')
+    infos =  xmltodict.parse(response)
+    bot.sendMessage(chat_id, 'Saldo da conta: $'+infos['client']['balance'].replace('-','')+' USD')
 
 def server_list():
     response = api_request('servers','list')
@@ -96,6 +100,8 @@ def actions(command):
     elif command[0] == '/graph':
         if len(command) > 1:
             graph(command[1])
+    elif command[0] == '/balance' or '/saldo' and username in admins:
+        balance()
 
 def handle_message(msg):
     try:
@@ -103,12 +109,19 @@ def handle_message(msg):
     except:
         username = ''
     content_type, chat_type, chat_id = telepot.glance2(msg)
-    if chat_type == 'group' and username in admins:
+    support_commands = ['/ticket','/graph','/servers']
+    admin_commands = ['/ticket','/graph','/servers','/balance']
+    if chat_type == 'group':
         if content_type is 'text':
             command = msg['text'].lower()
-            actions(command)
+            if username in admins and command in admin_commands:
+                actions(command,username)
+            elif username in support and command in support_commands:
+                actions(command,username)
+            else:
+                bot.sendMessage(chat_id, 'Desculpe, voce nao tem permissao pra usar esse comando ou o comando nao existe!')
     else:
-        bot.sendMessage(chat_id, 'Desculpe nao tenho permissao para falar com voce!')
+        bot.sendMessage(chat_id, 'Desculpe, nao tenho permissao para falar com voce!')
 
 def main():
     bot.notifyOnMessage(handle_message)
