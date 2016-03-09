@@ -3,7 +3,7 @@
 
 from daemon import Daemon
 from BeautifulSoup import BeautifulSoup
-import requests,xmltodict,telepot,time,os,sys
+import requests,xmltodict,telepot,time,os,sys,datetime
 
 class daemon_server(Daemon):
     def run(self):
@@ -40,6 +40,24 @@ def tickets():
             count += 1
     if count == 0:
             bot.sendMessage(chat_id, 'Relaxa nao tem tickets :D')
+def view_ticket(ticket_number):
+    response = api_request('support','viewticket&ticket='+str(ticket_number))
+    infos =  xmltodict.parse(response)
+    ticket = infos['ticket']
+    ticket_ID = ticket['@id']
+    opened = datetime.datetime.fromtimestamp(int(ticket['opened'])).strftime('%d-%m-%Y %H:%M:%S')
+    status = ticket['status']
+    username = ticket['username']
+    subject = BeautifulSoup(ticket['subject']).text
+    description = BeautifulSoup(ticket['description']).text
+    ticket_type = ticket['type']
+    bot.sendMessage(chat_id, 'ID: '+ticket_ID+'\nType: '+ticket_type+'\nOpened at:',opened,'\nStatus: '+status+'\nUsername: '+username+'\nSubject: '+subject+'\nDescription: \n'+description)
+    for response in ticket['responses']['response']:
+        time_response = datetime.datetime.fromtimestamp(int(response['timestamp'])).strftime('%d-%m-%Y %H:%M:%S')
+        username_response = response['name']
+        comment_response = BeautifulSoup(response['comment']).text
+        bot.sendMessage(chat_id, 'Response time:' , time_response,'\nUsername: '+username_response+'\nAnswer: \n'+comment_response)
+
 
 def server_list():
     response = api_request('servers','list')
@@ -55,8 +73,9 @@ def server_list():
             bot.sendMessage(chat_id, 'Server ID:: '+server_id+'\nName: '+name+'\nStatus: '+status+'\nOS: '+os+'\nPublic IP: '+public_ip+'\nPrivate IP:'+private_ip+'\nBandwitch: '+bandwitch)
 
 def graph(server):
+    api_request('servers','bwgraph&server_id='+server)
     file_png = open(server+'.png','wb')
-    file_png.write(api_request('servers','bwgraph&server_id='+server))
+    file_png.write()
     file_png.close()
     file_png = open(server+'.png','rb')
     bot.sendPhoto(chat_id,file_png)
@@ -64,8 +83,11 @@ def graph(server):
 
 def actions(command):
     command = command.split()
-    if command[0] == '/tickets':
-        tickets()
+    if command[0] == '/ticket':
+        if len(command) > 1:
+            view_ticket(command[1])
+        else:
+            tickets()
 
     elif command[0] == '/servers':
         server_list()
@@ -92,12 +114,13 @@ def main():
     while 1:
         time.sleep(10)
 
+telegram_api,chat_id,admins,lime_api = get_conf()
+admins = admins.split(',')
+bot = telepot.Bot(telegram_api)
+
 daemon_service = daemon_server('/var/run/Tele_Lime.pid')
 if len(sys.argv) >= 2:
     if sys.argv[1] == 'start':
-        telegram_api,chat_id,admins,lime_api = get_conf()
-        admins = admins.split(',')
-        bot = telepot.Bot(telegram_api)
         daemon_service.start()
 
     elif sys.argv[1] == 'stop':
