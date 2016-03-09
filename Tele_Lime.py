@@ -39,9 +39,10 @@ def tickets():
             bot.sendMessage(chat_id, 'Status: '+status+'\nUser ID: '+user_id+'\nUsername: '+username+'\nSubject: '+subject+'\nDescription: '+description)
             count += 1
     if count == 0:
-            bot.sendMessage(chat_id, 'Relaxa nao tem tickets :D')
+        bot.sendMessage(chat_id, 'Relaxa nao tem tickets :D')
+
 def view_ticket(ticket_number):
-    response = api_request('support','viewticket&ticket='+str(ticket_number))
+    response = api_request('support','viewticket&ticket='+ticket_number)
     infos =  xmltodict.parse(response)
     ticket = infos['ticket']
     ticket_ID = ticket['@id']
@@ -51,12 +52,12 @@ def view_ticket(ticket_number):
     subject = BeautifulSoup(ticket['subject']).text
     description = BeautifulSoup(ticket['description']).text
     ticket_type = ticket['type']
-    bot.sendMessage(chat_id, 'ID: '+ticket_ID+'\nType: '+ticket_type+'\nOpened at:',opened,'\nStatus: '+status+'\nUsername: '+username+'\nSubject: '+subject+'\nDescription: \n'+description)
+    bot.sendMessage(chat_id, 'ID: '+ticket_ID+'\nType: '+ticket_type+'\nOpened at:'+str(opened)+'\nStatus: '+status+'\nUsername: '+username+'\nSubject: '+subject+'\nDescription: \n'+description)
     for response in ticket['responses']['response']:
         time_response = datetime.datetime.fromtimestamp(int(response['timestamp'])).strftime('%d-%m-%Y %H:%M:%S')
         username_response = response['name']
         comment_response = BeautifulSoup(response['comment']).text
-        bot.sendMessage(chat_id, 'Response time:' , time_response,'\nUsername: '+username_response+'\nAnswer: \n'+comment_response)
+        bot.sendMessage(chat_id, 'Response time:'+str(time_response)+'\nUsername: '+username_response+'\nAnswer: \n'+comment_response)
 
 
 def server_list():
@@ -84,7 +85,7 @@ def graph(server):
 def actions(command):
     command = command.split()
     if command[0] == '/ticket':
-        if len(command) > 1:
+        if len(command) != 1:
             view_ticket(command[1])
         else:
             tickets()
