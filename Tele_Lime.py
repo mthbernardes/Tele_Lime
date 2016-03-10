@@ -18,7 +18,9 @@ def get_conf():
     admins = config.get('Telegram','admins')
     lime_api = config.get('Lime','api')
     admins = config.get('Telegram','admins')
-    return telegram_api,group_id,admins,lime_api
+    support = config.get('Telegram','admins')
+
+    return telegram_api,group_id,admins,support,lime_api
 
 def api_request(mode,action):
     url = 'https://one.limestonenetworks.com/webservices/clientapi.php?key=%s&mod=%s&action=%s' % (lime_api, mode, action)
@@ -127,8 +129,9 @@ def main():
     while 1:
         time.sleep(10)
 
-telegram_api,chat_id,admins,lime_api = get_conf()
+telegram_api,group_id,admins,support,lime_ap = get_conf()
 admins = admins.split(',')
+support = support.split(',')
 bot = telepot.Bot(telegram_api)
 
 daemon_service = daemon_server('/var/run/Tele_Lime.pid')
