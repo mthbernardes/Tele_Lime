@@ -78,16 +78,15 @@ def server_list():
             bot.sendMessage(chat_id, 'Server ID:: '+server_id+'\nName: '+name+'\nStatus: '+status+'\nOS: '+os+'\nPublic IP: '+public_ip+'\nPrivate IP:'+private_ip+'\nBandwitch: '+bandwitch)
 
 def graph(server):
-    api_request('servers','bwgraph&server_id='+server)
+    image = api_request('servers','bwgraph&server_id='+server)
     file_png = open(server+'.png','wb')
-    file_png.write()
+    file_png.write(image)
     file_png.close()
     file_png = open(server+'.png','rb')
     bot.sendPhoto(chat_id,file_png)
     os.system('rm '+server+'.png')
 
-def actions(command):
-    command = command.split()
+def actions(command,username):
     if command[0] == '/ticket':
         if len(command) != 1:
             view_ticket(command[1])
@@ -113,10 +112,10 @@ def handle_message(msg):
     admin_commands = ['/ticket','/graph','/servers','/balance']
     if chat_type == 'group':
         if content_type is 'text':
-            command = msg['text'].lower()
-            if username in admins and command in admin_commands:
+            command = msg['text'].lower().split()
+            if username in admins and command[0] in admin_commands:
                 actions(command,username)
-            elif username in support and command in support_commands:
+            elif username in support and command[0] in support_commands:
                 actions(command,username)
             else:
                 bot.sendMessage(chat_id, 'Desculpe, voce nao tem permissao pra usar esse comando ou o comando nao existe!')
